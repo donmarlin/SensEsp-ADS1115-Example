@@ -10,7 +10,7 @@
 // for external hardware libraries.
 
 #define SERIALDEBUG
-
+#define SENSESPV3
 #include <Arduino.h>
 #include "sensesp/signalk/signalk_listener.h"
 #include "sensesp/signalk/signalk_value_listener.h"
@@ -52,11 +52,13 @@ void setup() {
 
   // used to create a unique id
   uint8_t chipid [ 6 ];
-
-#ifndef SERIAL_DEBUG_DISABLED
-  SetupSerialDebug(115200);
-#endif
-
+  #ifdef SENSESPV3
+  SetupLogging();
+  #else
+  #ifndef SERIAL_DEBUG_DISABLED
+    SetupSerialDebug(115200);
+  #endif
+  #endif
   // derive a unique chip id from the burned in MAC address
   esp_efuse_mac_get_default ( chipid );
   for ( int i = 0 ; i < 6 ; i++ )
@@ -84,7 +86,7 @@ void setup() {
 
   // Create a new sensor for adsB1 channel 0
   const char *kAnalogInputB1A0LinearConfigPath = "/sensors/analog_input_adsB1_0/calibrate";
-  const char *kAnalogInputB1A0SKPath = "/sensors/analog_input_adsB1_0/voltage";
+  const char *kAnalogInputB1A0SKPath = "/sensors/analog_input_adsB1_0/sk_path";
   const float AnalogInputB1A0multiplier = 1.515; // just read in volts for now
   const float AnalogInputB1A0offset = 0;
 
@@ -97,8 +99,8 @@ void setup() {
       ->connect_to(new Linear(AnalogInputB1A0multiplier, AnalogInputB1A0offset, kAnalogInputB1A0LinearConfigPath))
   
       ->connect_to(new SKOutputFloat(
-          "/sensors/analog_input_adsB1_0/voltage",         // Signal K path
-          kAnalogInputB1A0SKPath,        
+         "/sensors/analog_input_adsB1_0/voltage",         // Signal K path
+         kAnalogInputB1A0SKPath,        
                                                   // web UI and for storing the
                                                   // configuration
           new SKMetadata("Volts",                     // Define output units
@@ -106,7 +108,7 @@ void setup() {
 
   // Create a new sensor for adsB1 channel 1
   const char *kAnalogInputB1A1LinearConfigPath = "/sensors/analog_input_adsB1_1/calibrate";
-  const char *kAnalogInputB1A1SKPath = "/sensors/analog_input_adsB1_1/voltage";
+  const char *kAnalogInputB1A1SKPath = "/sensors/analog_input_adsB1_1/sk_path";
   const float AnalogInputB1A1multiplier = 1.515; // just read in volts for now
   const float AnalogInputB1A1offset = 0;
 
@@ -128,7 +130,7 @@ void setup() {
 
   // Create a new sensor for adsB1 channel 2
   const char *kAnalogInputB1A2LinearConfigPath = "/sensors/analog_input_adsB1_2/calibrate";
-  const char *kAnalogInputB1A2SKPath = "/sensors/analog_input_adsB1_2/voltage";
+  const char *kAnalogInputB1A2SKPath = "/sensors/analog_input_adsB1_2/sk_path";
   const float AnalogInputB1A2multiplier = 1.515; // just read in volts for now
   const float AnalogInputB1A2offset = 0;
 
@@ -150,7 +152,7 @@ void setup() {
 
   // Create a new sensor for adsB1 channel 3
   const char *kAnalogInputB1A3LinearConfigPath = "/sensors/analog_input_adsB1_3/calibrate";
-  const char *kAnalogInputB1A3SKPath = "/sensors/analog_input_adsB1_3/voltage";
+  const char *kAnalogInputB1A3SKPath = "/sensors/analog_input_adsB1_3/sk_path";
   const float AnalogInputB1A3multiplier = 1.515; // just read in volts for now
   const float AnalogInputB1A3offset = 0;
 
@@ -172,9 +174,10 @@ void setup() {
 
 //*****************end ads115 I2C
 
+  #ifndef SENSESPV3
   // Start networking, SK server connections and other SensESP internals
   sensesp_app->start();
-
+  #endif
 } // end setup
 
 void loop() { 
